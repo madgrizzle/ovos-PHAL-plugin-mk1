@@ -1,0 +1,10 @@
+setup.py
+ovos_phal_mk1/__init__.py
+ovos_phal_mk1/arduino.py
+ovos_phal_mk1.egg-info/PKG-INFO
+ovos_phal_mk1.egg-info/SOURCES.txt
+ovos_phal_mk1.egg-info/dependency_links.txt
+ovos_phal_mk1.egg-info/entry_points.txt
+ovos_phal_mk1.egg-info/requires.txt
+ovos_phal_mk1.egg-info/top_level.txt
+ovos_phal_mk1.egg-info/zip-safe
