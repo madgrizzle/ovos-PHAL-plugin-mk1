@@ -1,2 +1,0 @@
-ovos-plugin-manager>=0.0.1
-ovos_utils>=0.0.12
