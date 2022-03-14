@@ -6,7 +6,7 @@ import serial
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_utils.log import LOG
 
-from ovos_phal_mk1.arduino import EnclosureReader, EnclosureWriter
+from ovos_PHAL_plugin_mk1.arduino import EnclosureReader, EnclosureWriter
 
 
 # The Mark 1 hardware consists of a Raspberry Pi main CPU which is connected
@@ -43,8 +43,8 @@ class MycroftMark1(PHALPlugin):
        """
     validator = MycroftMark1Validator
 
-    def __init__(self, bus=None):
-        super().__init__(bus, "mycroft_mark_1")
+    def __init__(self, bus=None, config=None):
+        super().__init__(bus=bus, name="ovos-PHAL-plugin-mk1", config=config)
         self.stopped = Event()
         self.config = {
             "port": "",

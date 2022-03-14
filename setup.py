@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
-PLUGIN_ENTRY_POINT = 'ovos-phal-mk1=ovos_phal_mk1:MycroftMark1'
+PLUGIN_ENTRY_POINT = 'ovos-phal-mk1=ovos_PHAL_plugin_mk1:MycroftMark1'
 setup(
-    name='ovos-phal-mk1',
+    name='ovos-PHAL-plugin-mk1',
     version='0.0.1a2',
     description='A PHAL plugin for mycroft',
     url='https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1',
     author='JarbasAi',
     author_email='jarbasai@mailfence.com',
     license='Apache-2.0',
-    packages=['ovos_phal_mk1'],
+    packages=['ovos_PHAL_plugin_mk1'],
     install_requires=["ovos-plugin-manager"],
     zip_safe=True,
     classifiers=[
