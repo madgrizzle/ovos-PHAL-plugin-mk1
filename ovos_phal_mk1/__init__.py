@@ -3,7 +3,7 @@ from threading import Event
 from time import sleep
 
 import serial
-from ovos_plugin_manager.phal import PHALPlugin, PHALMouthPlugin, PHALEyesPlugin
+from ovos_plugin_manager.phal import PHALPlugin
 from ovos_utils.log import LOG
 
 from ovos_phal_mk1.arduino import EnclosureReader, EnclosureWriter
@@ -18,7 +18,17 @@ from ovos_phal_mk1.arduino import EnclosureReader, EnclosureWriter
 # pressing or turning a rotary encoder.
 
 
-class MycroftMark1(PHALPlugin, PHALMouthPlugin, PHALEyesPlugin):
+class MycroftMark1Validator:
+    @staticmethod
+    def validate(config=None):
+        """ this method is called before loading the plugin.
+        If it returns False the plugin is not loaded.
+        This allows a plugin to run platform checks"""
+        # TODO how to detect if running in a mark1 ?
+        return True
+
+
+class MycroftMark1(PHALPlugin):
     """
        Serves as a communication interface between Arduino and Mycroft Core.
 
@@ -31,6 +41,7 @@ class MycroftMark1(PHALPlugin, PHALMouthPlugin, PHALEyesPlugin):
 
        E.g. Start and Stop talk animation
        """
+    validator = MycroftMark1Validator
 
     def __init__(self, bus=None):
         super().__init__(bus, "mycroft_mark_1")
@@ -393,3 +404,5 @@ class MycroftMark1(PHALPlugin, PHALMouthPlugin, PHALEyesPlugin):
                 icon = "x=2," + icon
                 msg = "weather.display=" + str(temp) + "," + str(icon)
                 self.writer.write(msg)
+
+
