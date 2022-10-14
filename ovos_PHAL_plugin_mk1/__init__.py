@@ -3,6 +3,7 @@ from threading import Event
 from time import sleep
 
 import serial
+from mycroft_bus_client.message import Message
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_utils.log import LOG
 
@@ -62,6 +63,13 @@ class MycroftMark1(PHALPlugin):
         self.writer.write("eyes.reset")
         self.writer.write("mouth.reset")
 
+        self.bus.on("system.factory.reset.ping",
+                    self.handle_register_factory_reset_handler)
+        self.bus.on("system.factory.reset.phal",
+                    self.handle_factory_reset)
+        self.bus.emit(Message("system.factory.reset.register",
+                              {"skill_id": "ovos-phal-plugin-mk1"}))
+
     def __init_serial(self):
         try:
             self.port = self.config.get("port")
@@ -88,9 +96,14 @@ class MycroftMark1(PHALPlugin):
         self.bus.emit(message.reply("enclosure.eyes.rgb",
                                     {"pixels": self._current_rgb}))
 
-    def on_factory_reset(self):
+    def handle_factory_reset(self, message):
         self.writer.write("eyes.spin")
         self.writer.write("mouth.reset")
+        # TODO re-flash firmware to faceplate
+
+    def handle_register_factory_reset_handler(self, message):
+        self.bus.emit(message.reply("system.factory.reset.register",
+                                    {"skill_id": "ovos-phal-plugin-mk1"}))
 
     # Audio Events
     def on_awake(self, message=None):
@@ -404,5 +417,3 @@ class MycroftMark1(PHALPlugin):
                 icon = "x=2," + icon
                 msg = "weather.display=" + str(temp) + "," + str(icon)
                 self.writer.write(msg)
-
-
