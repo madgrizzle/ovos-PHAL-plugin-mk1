@@ -69,6 +69,7 @@ class MycroftMark1(PHALPlugin):
                     self.handle_factory_reset)
         self.bus.on("mycroft.not.paired", self.handle_not_paired)
         self.bus.on("mycroft.paired", self.handle_paired)
+        self.bus.on("mycroft.pairing.code", self.handle_pairing_code)
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
 
