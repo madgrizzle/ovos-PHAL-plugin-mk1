@@ -67,8 +67,31 @@ class MycroftMark1(PHALPlugin):
                     self.handle_register_factory_reset_handler)
         self.bus.on("system.factory.reset.phal",
                     self.handle_factory_reset)
+        self.bus.on("mycroft.not.paired", self.handle_not_paired)
+        self.bus.on("mycroft.paired", self.handle_paired)
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
+
+    def handle_not_paired(self, message):
+        # Make sure pairing info stays on display
+        # TODO - make this public in OPN
+        self._deactivate_mouth_events()
+        pairing_url = message.data.get("pairing_url") or "home.mycroft.ai"
+        message.data["text"] = pairing_url + "      "
+        self.on_text(message)
+
+    def handle_pairing_code(self, message):
+        # Make sure pairing code stays on display
+        # TODO - make this public in OPN
+        self._deactivate_mouth_events()
+        code = message.data["code"]
+        message.data["text"] = code
+        self.on_text(message)
+
+    def handle_paired(self, message):
+        # reenable mouth events
+        # TODO - make this public in OPN
+        self._activate_mouth_events()  # clears the display
 
     def __init_serial(self):
         try:
