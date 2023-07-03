@@ -4,6 +4,8 @@ handles integration with the Mycroft Mark1 hardware
 
 the firmware can be found in the original repository [MycroftAI/enclosure-mark1](https://github.com/MycroftAI/enclosure-mark1)
 
+utits to interact with the faceplate pixel by pixel can be found in [ovos-utils.enclosure.mk1](https://github.com/OpenVoiceOS/ovos-utils/tree/dev/ovos_utils/enclosure/mark1) 
+
 # Serial Port Protocols
 
 See the file [protocols.txt](./protocols.txt) for a description of commands that can be sent to the faceplate.
@@ -18,8 +20,7 @@ Which will blink the eyes, turn them red, then display the phrase on the facepla
 
 
 # Graphics
-The `mouth.icon=` command takes a custom format for it's black and white images.  You can use the [HTML editor](http://htmlpreview.github.io/?https://raw.githubusercontent.com/MycroftAI/enclosure-mark1/master/editor.html) to create the image strings that can be sent.  Within Mycroft you can send PNG files using `self.enclosure.display_png()` and they will be automatically converted to the correct format for you.
-
+The `mouth.icon=` command takes a custom format for it's black and white images.  You can use the [HTML editor](http://htmlpreview.github.io/?https://raw.githubusercontent.com/MycroftAI/enclosure-mark1/master/editor.html) to create the image strings that can be sent. 
 
 # IO pins
 When looking at the device from the back, pins are laid out as:
