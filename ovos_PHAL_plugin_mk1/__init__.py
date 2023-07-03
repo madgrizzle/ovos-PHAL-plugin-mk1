@@ -26,6 +26,7 @@ class MycroftMark1Validator:
         If it returns False the plugin is not loaded.
         This allows a plugin to run platform checks"""
         # TODO how to detect if running in a mark1 ?
+        #  detect "/dev/ttyAMA0" ?
         return True
 
 
@@ -47,65 +48,42 @@ class MycroftMark1(PHALPlugin):
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="ovos-PHAL-plugin-mk1", config=config)
         self.stopped = Event()
-        self.config = {
-            "port": "",
-            "rate": "",
-            "timeout": 5
-        }  # TODO
-
+        self.config = config or {
+            "port": "/dev/ttyAMA0",
+            "rate": 9600,
+            "timeout": 5.0
+        }
         self.__init_serial()
+        LOG.debug("loading serial reader")
         self.reader = EnclosureReader(self.serial, self.bus)
+        LOG.debug("loading serial writer")
         self.writer = EnclosureWriter(self.serial, self.bus)
 
         self._num_pixels = 12 * 2
         self._current_rgb = [(255, 255, 255) for i in range(self._num_pixels)]
 
+        LOG.debug("clearing eyes and mouth")
         self.writer.write("eyes.reset")
         self.writer.write("mouth.reset")
 
-        self.bus.on("system.factory.reset.ping",
-                    self.handle_register_factory_reset_handler)
-        self.bus.on("system.factory.reset.phal",
-                    self.handle_factory_reset)
-        self.bus.on("mycroft.not.paired", self.handle_not_paired)
-        self.bus.on("mycroft.paired", self.handle_paired)
-        self.bus.on("mycroft.pairing.code", self.handle_pairing_code)
+        self.bus.on("system.factory.reset.ping", self.handle_register_factory_reset_handler)
+        self.bus.on("system.factory.reset.phal", self.handle_factory_reset)
+
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
 
-    def handle_not_paired(self, message):
-        # Make sure pairing info stays on display
-        # TODO - make this public in OPN
-        self._deactivate_mouth_events()
-        pairing_url = message.data.get("pairing_url") or "home.mycroft.ai"
-        message.data["text"] = pairing_url + "      "
-        self.on_text(message)
-
-    def handle_pairing_code(self, message):
-        # Make sure pairing code stays on display
-        # TODO - make this public in OPN
-        self._deactivate_mouth_events()
-        code = message.data["code"]
-        message.data["text"] = code
-        self.on_text(message)
-
-    def handle_paired(self, message):
-        # reenable mouth events
-        # TODO - make this public in OPN
-        self._activate_mouth_events()  # clears the display
-
     def __init_serial(self):
+        LOG.info("Connecting to mark1 faceplate")
         try:
-            self.port = self.config.get("port")
-            self.rate = self.config.get("rate")
-            self.timeout = self.config.get("timeout")
+            self.port = self.config.get("port", "/dev/ttyAMA0")
+            self.rate = self.config.get("rate", 9600)
+            self.timeout = self.config.get("timeout", 5.0)
             self.serial = serial.serial_for_url(
                 url=self.port, baudrate=self.rate, timeout=self.timeout)
             LOG.info("Connected to: %s rate: %s timeout: %s" %
                      (self.port, self.rate, self.timeout))
-        except Exception:
-            LOG.error("Impossible to connect to serial port: " +
-                      str(self.port))
+        except Exception as e:
+            LOG.exception(f"Impossible to connect to serial: {self.port}")
             raise
 
     def __reset(self, message=None):
