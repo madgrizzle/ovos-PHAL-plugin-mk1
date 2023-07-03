@@ -4,14 +4,14 @@ from setuptools import setup
 PLUGIN_ENTRY_POINT = 'ovos-phal-mk1=ovos_PHAL_plugin_mk1:MycroftMark1'
 setup(
     name='ovos-PHAL-plugin-mk1',
-    version='0.0.1a2',
+    version='0.0.1a3',
     description='A PHAL plugin for mycroft',
     url='https://github.com/OpenVoiceOS/ovos-PHAL-plugin-mk1',
     author='JarbasAi',
     author_email='jarbasai@mailfence.com',
     license='Apache-2.0',
     packages=['ovos_PHAL_plugin_mk1'],
-    install_requires=["ovos-plugin-manager"],
+    install_requires=["ovos-plugin-manager", "ovos-bus-client", "pyserial~=3.0"],
     zip_safe=True,
     classifiers=[
         'Development Status :: 3 - Alpha',
