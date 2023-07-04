@@ -54,14 +54,14 @@ class MycroftMark1(PHALPlugin):
             "timeout": 5.0
         }
         self.__init_serial()
-        LOG.debug("loading serial reader")
-        self.reader = EnclosureReader(self.serial, self.bus)
-        LOG.debug("loading serial writer")
+        self.reader = EnclosureReader(self.serial, self.bus, self.handle_button_press)
         self.writer = EnclosureWriter(self.serial, self.bus)
 
         self._num_pixels = 12 * 2
         self._current_rgb = [(255, 255, 255) for i in range(self._num_pixels)]
         self.showing_visemes = False
+        self.speaking = False
+        self.listening = False
 
         LOG.debug("clearing eyes and mouth")
         self.writer.write("eyes.reset")
@@ -101,6 +101,12 @@ class MycroftMark1(PHALPlugin):
         self.writer.write("eyes.reset")
         self.writer.write("mouth.reset")
 
+    def handle_button_press(self):
+        if self.speaking or self.listening:
+            self.bus.emit(Message("mycroft.stop"))
+        else:
+            self.bus.emit(Message("mycroft.mic.listen"))
+
     def on_music(self, message=None):
         self.music_icon.display()
 
@@ -124,16 +130,20 @@ class MycroftMark1(PHALPlugin):
     # Audio Events
     def on_record_begin(self, message=None):
         # NOTE: ignore self._mouth_events, listening should ALWAYS be obvious
+        self.listening = True
         self.on_listen(message)
 
     def on_record_end(self, message=None):
+        self.listening = False
         self.on_display_reset(message)
 
     def on_audio_output_start(self, message=None):
+        self.speaking = True
         if self._mouth_events:
             self.on_talk(message)
 
     def on_audio_output_end(self, message=None):
+        self.speaking = False
         if self._mouth_events:
             self.on_display_reset(message)
 

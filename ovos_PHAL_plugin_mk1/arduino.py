@@ -35,12 +35,13 @@ class EnclosureReader(Thread):
     Note: A command is identified by a line break
     """
 
-    def __init__(self, serial, bus):
+    def __init__(self, serial, bus, button_callback=None):
         super(EnclosureReader, self).__init__(target=self.read)
         self.alive = True
         self.daemon = True
         self.serial = serial
         self.bus = bus
+        self.button_callback = button_callback
         self.start()
 
     def read(self):
@@ -60,11 +61,6 @@ class EnclosureReader(Thread):
 
     def process(self, data):
         LOG.info(f"faceplate event: {data}")
-        # TODO: Look into removing this emit altogether.
-        # We need to check if any other serial bus messages
-        # are handled by other parts of the code
-        if "mycroft.stop" not in data:
-            self.bus.emit(Message(data))
 
         if "Command: system.version" in data:
             # This happens in response to the "system.version" message
@@ -72,7 +68,10 @@ class EnclosureReader(Thread):
             self.bus.emit(Message("enclosure.started"))
 
         if "mycroft.stop" in data:
-            self.bus.emit(Message("mycroft.stop"))
+            if self.button_callback:
+                self.button_callback()
+            else:
+                self.bus.emit(Message("mycroft.stop"))
 
         if "volume.up" in data:
             self.bus.emit(Message("mycroft.volume.increase",
