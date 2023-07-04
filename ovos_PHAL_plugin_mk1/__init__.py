@@ -1,12 +1,13 @@
+import time
 from threading import Event
+from time import sleep
 
 import serial
-import time
 from ovos_bus_client.message import Message
 from ovos_utils.enclosure.mark1.faceplate.icons import MusicIcon, WarningIcon, SnowIcon, StormIcon, SunnyIcon, \
     CloudyIcon, PartlyCloudyIcon, WindIcon, RainIcon, LightRainIcon
 from ovos_utils.log import LOG
-from time import sleep
+from ovos_utils.network_utils import is_connected
 
 from ovos_PHAL_plugin_mk1.arduino import EnclosureReader, EnclosureWriter
 from ovos_plugin_manager.phal import PHALPlugin
@@ -66,8 +67,12 @@ class MycroftMark1(PHALPlugin):
         self.listening = False
 
         LOG.debug("clearing eyes and mouth")
-        self.writer.write("eyes.reset")
-        self.writer.write("mouth.reset")
+        self.__reset()
+
+        # TODO settings
+        #  - default eye color
+        #  - narrow / half / full eyes default position
+        self._init_animation()
 
         self.bus.on("system.factory.reset.ping", self.handle_register_factory_reset_handler)
         self.bus.on("system.factory.reset.phal", self.handle_factory_reset)
@@ -81,6 +86,40 @@ class MycroftMark1(PHALPlugin):
 
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
+
+    def _init_animation(self):
+        # narrow eyes while we do system checks
+        self.on_eyes_narrow()
+
+        # signal no internet
+        if not is_connected():
+            self.on_no_internet()
+
+        # if core is ready, reset eyes
+        self.bus.once("mycroft.ready", self.on_eyes_reset)
+        if self._check_services_ready():
+            self.on_eyes_reset()
+
+    def _check_services_ready(self):
+        """Report if all specified services are ready.
+
+        services (iterable): service names to check.
+        """
+        services = {k: False for k in ["skills",  # ovos-core
+                                       "audio",  # ovos-audio
+                                       "voice"  # ovos-dinkum-listener
+                                       ]}
+
+        for ser, rdy in services.items():
+            if rdy:
+                # already reported ready
+                continue
+            response = self.bus.wait_for_response(
+                Message(f'mycroft.{ser}.is_ready',
+                        context={"source": "mk1", "destination": "skills"}))
+            if response and response.data['status']:
+                services[ser] = True
+        return all([services[ser] for ser in services])
 
     def __init_serial(self):
         LOG.info("Connecting to mark1 faceplate")
