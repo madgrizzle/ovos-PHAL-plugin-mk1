@@ -43,9 +43,6 @@ class EnclosureReader(Thread):
         self.bus = bus
         self.start()
 
-        # Notifications from mycroft-core
-        self.bus.on("mycroft.stop.handled", self.on_stop_handled)
-
     def read(self):
         while self.alive:
             try:
@@ -61,11 +58,8 @@ class EnclosureReader(Thread):
             except Exception as e:
                 LOG.error("Reading error: {0}".format(e))
 
-    def on_stop_handled(self, event):
-        # A skill performed a stop
-        check_for_signal('buttonPress')
-
     def process(self, data):
+        LOG.info(f"faceplate event: {data}")
         # TODO: Look into removing this emit altogether.
         # We need to check if any other serial bus messages
         # are handled by other parts of the code
