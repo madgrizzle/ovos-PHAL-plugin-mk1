@@ -1,9 +1,11 @@
+from threading import Event
+
 import serial
 import time
 from ovos_bus_client.message import Message
-from ovos_utils.enclosure.mark1.faceplate.icons import MusicIcon, WarningIcon
+from ovos_utils.enclosure.mark1.faceplate.icons import MusicIcon, WarningIcon, SnowIcon, StormIcon, SunnyIcon, \
+    CloudyIcon, PartlyCloudyIcon, WindIcon, RainIcon, LightRainIcon
 from ovos_utils.log import LOG
-from threading import Event
 from time import sleep
 
 from ovos_PHAL_plugin_mk1.arduino import EnclosureReader, EnclosureWriter
@@ -80,9 +82,6 @@ class MycroftMark1(PHALPlugin):
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
 
-        self.music_icon = MusicIcon(bus=self.bus)
-        self.warning_icon = WarningIcon(bus=self.bus)
-
     def __init_serial(self):
         LOG.info("Connecting to mark1 faceplate")
         try:
@@ -108,7 +107,7 @@ class MycroftMark1(PHALPlugin):
             self.bus.emit(Message("mycroft.mic.listen"))
 
     def on_music(self, message=None):
-        self.music_icon.display()
+        MusicIcon(bus=self.bus).display()
 
     def handle_get_color(self, message):
         """Get the eye RGB color for all pixels
@@ -185,7 +184,7 @@ class MycroftMark1(PHALPlugin):
         """
         triggered by "enclosure.notify.no_internet"
         """
-        self.warning_icon.display()
+        WarningIcon(bus=self.bus).display()
 
     def on_system_reset(self, message=None):
         """The enclosure hardware should reset any CPUs, etc.
@@ -504,28 +503,28 @@ class MycroftMark1(PHALPlugin):
             icon = None
             if img_code == 0:
                 # sunny
-                icon = "IICEIBMDNLMDIBCEAA"
+                icon = SunnyIcon(bus=self.bus).encode()
             elif img_code == 1:
                 # partly cloudy
-                icon = "IIEEGBGDHLHDHBGEEA"
+                icon = PartlyCloudyIcon(bus=self.bus).encode()
             elif img_code == 2:
                 # cloudy
-                icon = "IIIBMDMDODODODMDIB"
+                icon = CloudyIcon(bus=self.bus).encode()
             elif img_code == 3:
                 # light rain
-                icon = "IIMAOJOFPBPJPFOBMA"
+                icon = LightRainIcon(bus=self.bus).encode()
             elif img_code == 4:
                 # raining
-                icon = "IIMIOFOBPFPDPJOFMA"
+                icon = RainIcon(bus=self.bus).encode()
             elif img_code == 5:
                 # storming
-                icon = "IIAAIIMEODLBJAAAAA"
+                icon = StormIcon(bus=self.bus).encode()
             elif img_code == 6:
                 # snowing
-                icon = "IIJEKCMBPHMBKCJEAA"
+                icon = SnowIcon(bus=self.bus).encode()
             elif img_code == 7:
                 # wind/mist
-                icon = "IIABIBIBIJIJJGJAGA"
+                icon = WindIcon(bus=self.bus).encode()
 
             temp = message.data.get("temp", None)
             if icon is not None and temp is not None:
