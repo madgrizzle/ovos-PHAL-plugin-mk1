@@ -1,6 +1,7 @@
 import serial
 import time
 from ovos_bus_client.message import Message
+from ovos_utils.enclosure.mark1.faceplate.icons import MusicIcon, WarningIcon
 from ovos_utils.log import LOG
 from threading import Event
 from time import sleep
@@ -60,6 +61,7 @@ class MycroftMark1(PHALPlugin):
 
         self._num_pixels = 12 * 2
         self._current_rgb = [(255, 255, 255) for i in range(self._num_pixels)]
+        self.showing_visemes = False
 
         LOG.debug("clearing eyes and mouth")
         self.writer.write("eyes.reset")
@@ -68,11 +70,18 @@ class MycroftMark1(PHALPlugin):
         self.bus.on("system.factory.reset.ping", self.handle_register_factory_reset_handler)
         self.bus.on("system.factory.reset.phal", self.handle_factory_reset)
 
-        # TODO - missing in OPM base class
-        self.bus.on("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
+        self.bus.on("mycroft.internet.connected", self.on_display_reset)
+        self.bus.on("mycroft.stop", self.on_display_reset)
+        self.bus.on("ovos.common_play.play", self.on_music)
+        self.bus.on("ovos.common_play.stop", self.on_display_reset)
+        self.bus.on("mycroft.audio.service.play", self.on_music)
+        self.bus.on("mycroft.audio.service.stop", self.on_display_reset)
 
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
+
+        self.music_icon = MusicIcon(bus=self.bus)
+        self.warning_icon = WarningIcon(bus=self.bus)
 
     def __init_serial(self):
         LOG.info("Connecting to mark1 faceplate")
@@ -91,6 +100,9 @@ class MycroftMark1(PHALPlugin):
     def __reset(self, message=None):
         self.writer.write("eyes.reset")
         self.writer.write("mouth.reset")
+
+    def on_music(self, message=None):
+        self.music_icon.display()
 
     def handle_get_color(self, message):
         """Get the eye RGB color for all pixels
@@ -118,7 +130,6 @@ class MycroftMark1(PHALPlugin):
         self.on_display_reset(message)
 
     def on_audio_output_start(self, message=None):
-        # TODO - conditional on current TTS plugin supporting phonemes or not
         if self._mouth_events:
             self.on_talk(message)
 
@@ -164,7 +175,7 @@ class MycroftMark1(PHALPlugin):
         """
         triggered by "enclosure.notify.no_internet"
         """
-        pass  # TODO no internet icon
+        self.warning_icon.display()
 
     def on_system_reset(self, message=None):
         """The enclosure hardware should reset any CPUs, etc.
@@ -373,27 +384,6 @@ class MycroftMark1(PHALPlugin):
         if message and message.data:
             code = message.data["code"]
             self.writer.write('mouth.viseme=' + code)
-
-    def _on_mouth_viseme_list(self, message=None):
-        """mouth visemes as a list in a single message.
-
-            Args:
-                start (int):    Timestamp for start of speech
-                viseme_pairs:   Pairs of viseme id and cumulative end times
-                                (code, end time)
-
-                                codes:
-                                 0 = shape for sounds like 'y' or 'aa'
-                                 1 = shape for sounds like 'aw'
-                                 2 = shape for sounds like 'uh' or 'r'
-                                 3 = shape for sounds like 'th' or 'sh'
-                                 4 = neutral shape for no sound
-                                 5 = shape for sounds like 'f' or 'v'
-                                 6 = shape for sounds like 'oy' or 'ao'
-        """
-        # TODO - missing in OPM base class
-        if self.mouth_events_active:
-            self.on_viseme(message)
 
     def on_viseme_list(self, message=None):
         """ Send mouth visemes as a list in a single message.
