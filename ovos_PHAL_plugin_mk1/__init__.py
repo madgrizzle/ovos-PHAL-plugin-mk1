@@ -1,13 +1,12 @@
+import serial
 import time
+from ovos_bus_client.message import Message
+from ovos_utils.log import LOG
 from threading import Event
 from time import sleep
 
-import serial
-from ovos_bus_client.message import Message
-from ovos_plugin_manager.phal import PHALPlugin
-from ovos_utils.log import LOG
-
 from ovos_PHAL_plugin_mk1.arduino import EnclosureReader, EnclosureWriter
+from ovos_plugin_manager.phal import PHALPlugin
 
 
 # The Mark 1 hardware consists of a Raspberry Pi main CPU which is connected
@@ -68,6 +67,9 @@ class MycroftMark1(PHALPlugin):
 
         self.bus.on("system.factory.reset.ping", self.handle_register_factory_reset_handler)
         self.bus.on("system.factory.reset.phal", self.handle_factory_reset)
+
+        # TODO - missing in OPM base class
+        self.bus.on("enclosure.mouth.viseme_list", self._on_mouth_viseme_list)
 
         self.bus.emit(Message("system.factory.reset.register",
                               {"skill_id": "ovos-phal-plugin-mk1"}))
@@ -372,7 +374,44 @@ class MycroftMark1(PHALPlugin):
             code = message.data["code"]
             self.writer.write('mouth.viseme=' + code)
 
+    def _on_mouth_viseme_list(self, message=None):
+        """mouth visemes as a list in a single message.
+
+            Args:
+                start (int):    Timestamp for start of speech
+                viseme_pairs:   Pairs of viseme id and cumulative end times
+                                (code, end time)
+
+                                codes:
+                                 0 = shape for sounds like 'y' or 'aa'
+                                 1 = shape for sounds like 'aw'
+                                 2 = shape for sounds like 'uh' or 'r'
+                                 3 = shape for sounds like 'th' or 'sh'
+                                 4 = neutral shape for no sound
+                                 5 = shape for sounds like 'f' or 'v'
+                                 6 = shape for sounds like 'oy' or 'ao'
+        """
+        # TODO - missing in OPM base class
+        if self.mouth_events_active:
+            self.on_viseme(message)
+
     def on_viseme_list(self, message=None):
+        """ Send mouth visemes as a list in a single message.
+
+            Args:
+                start (int):    Timestamp for start of speech
+                viseme_pairs:   Pairs of viseme id and cumulative end times
+                                (code, end time)
+
+                                codes:
+                                 0 = shape for sounds like 'y' or 'aa'
+                                 1 = shape for sounds like 'aw'
+                                 2 = shape for sounds like 'uh' or 'r'
+                                 3 = shape for sounds like 'th' or 'sh'
+                                 4 = neutral shape for no sound
+                                 5 = shape for sounds like 'f' or 'v'
+                                 6 = shape for sounds like 'oy' or 'ao'
+        """
         if message and message.data:
             start = message.data['start']
             visemes = message.data['visemes']
