@@ -88,6 +88,14 @@ class MycroftMark1(PHALPlugin):
                               {"skill_id": "ovos-phal-plugin-mk1"}))
 
     def _init_animation(self):
+        # change eye color
+        r = 0
+        g = 0
+        b = 255
+        color = (r * 65536) + (g * 256) + b
+        self._current_rgb = [(r, g, b) for i in range(self._num_pixels)]
+        self.writer.write("eyes.color=" + str(color))
+
         # narrow eyes while we do system checks
         self.on_eyes_narrow()
 
